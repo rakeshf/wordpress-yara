@@ -127,3 +127,14 @@ rule WP_WPDB_Unprepared
     condition:
         any of ($query, $results)
 }
+
+rule js_vulnerable_eval
+{
+    meta:
+        description = "Detects use of eval() in JavaScript"
+        severity = "high"
+    strings:
+        $eval = /eval\s*\(.*\);/i
+    condition:
+        $eval
+}
