@@ -1,0 +1,36 @@
+version: 2.1
+
+jobs:
+  test:
+    docker:
+      - image: cimg/php:8.0
+    steps:
+      - checkout
+      - run:
+          name: Install YARA
+          command: |
+            sudo apt-get update
+            sudo apt-get install -y yara
+      - run:
+          name: Install Composer dependencies
+          command: |
+            if [ -f composer.json ]; then composer install; fi
+      - run:
+          name: PHP Syntax Validation
+          command: |
+            find . -type f -name "*.php" -exec php -l {} \;
+      - run:
+          name: YARA Scan
+          command: |
+            if [ -f wordpress-threats.yar ]; then
+              echo "Running YARA scan...";
+              yara -r wordpress-threats.yar test-payloads/;
+            else
+              echo "No YARA rules file found, skipping scan.";
+            fi
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
