@@ -1,36 +1,34 @@
-version: 2.1
+language: php
 
-jobs:
-  test:
-    docker:
-      - image: cimg/php:8.0
-    steps:
-      - checkout
-      - run:
-          name: Install YARA
-          command: |
-            sudo apt-get update
-            sudo apt-get install -y yara
-      - run:
-          name: Install Composer dependencies
-          command: |
-            if [ -f composer.json ]; then composer install; fi
-      - run:
-          name: PHP Syntax Validation
-          command: |
-            find . -type f -name "*.php" -exec php -l {} \;
-      - run:
-          name: YARA Scan
-          command: |
-            if [ -f wordpress-threats.yar ]; then
-              echo "Running YARA scan...";
-              yara -r wordpress-threats.yar test-payloads/;
-            else
-              echo "No YARA rules file found, skipping scan.";
-            fi
+php:
+  - "7.4"
+  - "8.0"
 
-workflows:
-  version: 2
-  test:
-    jobs:
-      - test
+before_install:
+  # Install yara
+  - sudo apt-get update
+  - sudo apt-get install -y yara
+
+install:
+  # Install Composer dependencies, if any
+  - if [ -f composer.json ]; then composer install; fi
+
+script:
+  # PHP syntax validation for all PHP files
+  - find . -type f -name "*.php" -exec php -l {} \;
+
+  # Run yara scan and fail if there are any matches
+  - |
+    if [ -f wordpress-threats.yar ]; then
+      echo "Running YARA scan...";
+      SCAN_RESULT=$(yara -r wordpress-threats.yar test-payloads/)
+      if [ -n "$SCAN_RESULT" ]; then
+        echo "YARA scan failed! Threats detected:";
+        echo "$SCAN_RESULT"
+        exit 1
+      else
+        echo "YARA scan passed. No threats detected."
+      fi
+    else
+      echo "No YARA rules file found, skipping scan."
+    fi
