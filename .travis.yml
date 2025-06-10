@@ -1,0 +1,18 @@
+language: php
+
+php:
+  - "7.4"
+  - "8.0"
+
+before_install:
+  # Install yara
+  - sudo apt-get update
+  - sudo apt-get install -y yara
+
+install:
+  # Install Composer dependencies, if any
+
+script:
+  # Syntax check all PHP files
+  echo "Running yara scan...";
+  yara -r wordpress-threats.yar test-payloads/
