@@ -20,7 +20,7 @@ script:
   # Run yara scan if rule file exists
   - if [ -f wordpress-threats.yar ]; then
       echo "Running YARA scan...";
-      yara -r wordpress-threats.yar test-payloads/;
+      yara -r rules/wordpress-threats.yar test-payloads/;
     else
       echo "No YARA rules file found, skipping scan.";
     fi
