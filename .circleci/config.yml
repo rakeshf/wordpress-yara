@@ -22,7 +22,7 @@ jobs:
       - run:
           name: YARA Scan (fail if any matches)
           command: |
-            if [ -f wordpress-threats.yar ]; then
+            if [ -f rules/wordpress-threats.yar ]; then
               echo "Running YARA scan...";
               SCAN_RESULT=$(yara -rw rules/wordpress-threats.yar test-payloads/)
               if [ -n "$SCAN_RESULT" ]; then
