@@ -24,7 +24,7 @@ jobs:
           command: |
             if [ -f wordpress-threats.yar ]; then
               echo "Running YARA scan...";
-              SCAN_RESULT=$(yara -r wordpress-threats.yar test-payloads/)
+              SCAN_RESULT=$(yara -rw rules/wordpress-threats.yar test-payloads/)
               if [ -n "$SCAN_RESULT" ]; then
                 echo "YARA scan failed! Threats detected:";
                 echo "$SCAN_RESULT"
