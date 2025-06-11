@@ -2,6 +2,7 @@ import yara
 import os
 import sys
 
+
 def load_rules(rule_path):
     try:
         return yara.compile(filepath=rule_path)
@@ -56,8 +57,22 @@ def scan_file(file_path, rules):
     except Exception as e:
         print(f"[!] Error scanning {file_path}: {e}")
 
-def scan_directory(directory, rules, extensions=('.php', '.js')):
-    for root, _, files in os.walk(directory):
+def scan_directory(directory, rules, extensions=('.php', '.js'), skip_folders=None):
+    if skip_folders is None:
+        skip_folders = set()
+    else:
+        # Convert to set for faster lookup and normalize folder names
+        skip_folders = {folder.strip('/\\').lower() for folder in skip_folders}
+    
+    for root, dirs, files in os.walk(directory):
+        # Modify dirs in-place to skip specified folders
+        dirs[:] = [d for d in dirs if d.lower() not in skip_folders]
+        
+        # Also check if current directory should be skipped
+        current_dir_name = os.path.basename(root).lower()
+        if current_dir_name in skip_folders:
+            continue
+            
         for file in files:
             if file.lower().endswith(extensions):
                 full_path = os.path.join(root, file)
@@ -66,12 +81,22 @@ def scan_directory(directory, rules, extensions=('.php', '.js')):
 def main():
     print(f"[*] Using yara-python version: {yara.__version__}")
 
-    if len(sys.argv) != 3:
-        print("Usage: python yara_line_matcher.py <rules.yar> <target_file_or_directory>")
+    if len(sys.argv) < 3:
+        print("Usage: python yara_line_matcher.py <rules.yar> <target_file_or_directory> [--skip-folders folder1,folder2,...]")
+        print("Example: python yara_line_matcher.py rules.yar /path/to/scan --skip-folders node_modules,vendor,.git")
         sys.exit(1)
 
     yara_file = sys.argv[1]
     target = sys.argv[2]
+    
+    # Parse skip folders argument
+    skip_folders = []
+    if len(sys.argv) > 3:
+        for i, arg in enumerate(sys.argv[3:], 3):
+            if arg == '--skip-folders' and i + 1 < len(sys.argv):
+                skip_folders_str = sys.argv[i + 1]
+                skip_folders = [folder.strip() for folder in skip_folders_str.split(',')]
+                break
 
     if not os.path.exists(yara_file):
         print(f"[!] YARA rule file not found: {yara_file}")
@@ -82,13 +107,16 @@ def main():
 
     print("[*] Compiling YARA rules...")
     rules = load_rules(yara_file)
+    
+    if skip_folders:
+        print(f"[*] Skipping folders: {', '.join(skip_folders)}")
 
     if os.path.isfile(target):
         print(f"[*] Scanning file: {target}")
         scan_file(target, rules)
     elif os.path.isdir(target):
         print(f"[*] Scanning directory: {target}")
-        scan_directory(target, rules)
+        scan_directory(target, rules, skip_folders=skip_folders)
     else:
         print(f"[!] Target is neither a file nor a directory: {target}")
         sys.exit(1)
