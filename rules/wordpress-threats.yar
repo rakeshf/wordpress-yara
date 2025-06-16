@@ -138,3 +138,17 @@ rule js_vulnerable_eval
     condition:
         $eval
 }
+
+rule LFI_Pattern_PHP
+{
+    meta:
+        description = "Detects possible LFI using user input in include/require"
+        severity = "critical"
+    strings:
+        $include = /include\s*\(\s*\$_(GET|POST|REQUEST)/
+        $require = /require\s*\(\s*\$_(GET|POST|REQUEST)/
+        $inc_once = /include_once\s*\(\s*\$_(GET|POST|REQUEST)/
+        $req_once = /require_once\s*\(\s*\$_(GET|POST|REQUEST)/
+    condition:
+        any of them
+}
