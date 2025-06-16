@@ -16,7 +16,16 @@ This repository contains a curated set of [YARA](https://virustotal.github.io/ya
 ## 🚀 Getting Started
 
 ### 📦 Requirements
-
+# Linux:
 - YARA (v4+ recommended)
   ```bash
   sudo apt install yara
+
+# Windows:
+- YARA (Run powershell as admin):
+  ``` 
+  choco install yara
+- Python package:
+  ```
+  pip install yara-python
+  
