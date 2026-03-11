@@ -114,6 +114,27 @@ rule WP_SQL_Concat_From_Input
         any of ($in1, $in2)
 }
 
+rule PHP_Possible_SQL_Injection_String_Interpolation
+{
+    meta:
+        description = "Detects possible SQL injection via PHP variable interpolation in SQL query"
+        author = "Security Research"
+        date = "2026-03-11"
+        severity = "medium"
+
+    strings:
+        $sql1 = "SELECT "
+        $sql2 = "LEFT JOIN"
+        $sql3 = "WHERE"
+        $var1 = "$url"
+        $var2 = "$_GET"
+        $var3 = "$_POST"
+        $pattern = "= '$"
+
+    condition:
+        any of ($sql*) and any of ($var*) and $pattern
+}
+
 rule WP_WPDB_Unprepared
 {
     meta:
