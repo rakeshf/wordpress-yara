@@ -91,6 +91,31 @@ rule wordpress_missing_capability_check
         $action and not $no_capability
 }
 
+rule WP_Insecure_NonAbsolute_Include_Path
+{
+    meta:
+        description = "Detects non-absolute require/include usage in WordPress (missing plugin_dir_path or similar)"
+        category = "WordPress Security"
+        severity = "medium"
+        reference = "WordPressVIPMinimum.Files.IncludingFile.NotAbsolutePath"
+
+    strings:
+        $require_once_rel = /require_once\s*\(?\s*['"][^\/][^'"]+['"]\s*\)?/ nocase
+        $include_rel      = /include\s*\(?\s*['"][^\/][^'"]+['"]\s*\)?/ nocase
+        $include_once_rel = /include_once\s*\(?\s*['"][^\/][^'"]+['"]\s*\)?/ nocase
+
+        $safe1 = "plugin_dir_path"
+        $safe2 = "get_template_directory"
+        $safe3 = "get_stylesheet_directory"
+        $safe4 = "ABSPATH"
+
+    condition:
+        (
+            any of ($require_once_rel, $include_rel, $include_once_rel)
+        )
+        and not any of ($safe*)
+}
+
 rule wordpress_direct_file_access
 {
     meta:
@@ -100,6 +125,20 @@ rule wordpress_direct_file_access
         $no_abspath = /^<\?php(?!.*defined\s*\(\s*['"]ABSPATH['"]\s*\))/
     condition:
         $no_abspath
+}
+
+rule PHP_Uninitialized_Array_Used_In_Return
+{
+    meta:
+        description = "Detects array variable used without initialization and returned"
+        severity = "high"
+
+    strings:
+        $array_usage = /\$[a-zA-Z_][a-zA-Z0-9_]*\s*\[.*?\]\s*=/ 
+        $return_var  = /return\s+\$[a-zA-Z_][a-zA-Z0-9_]*/
+
+    condition:
+        $array_usage and $return_var
 }
 
 rule wordpress_rce_unserialize
